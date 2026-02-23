@@ -22,4 +22,4 @@ jobs:
                   "serviceID": "${{ secrets.ZEABUR_SERVICE_ID }}"
                 }
               }
-            }'
+            }
