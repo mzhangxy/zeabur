@@ -1,25 +1,28 @@
-
 name: Zeabur Auto Restart
+
 on:
   schedule:
-    - cron: '0 0 */7 * *'
+    - cron: '0 0 */7 * *'  # 每7天
   workflow_dispatch:
 
 jobs:
   restart:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Zeabur API Redeploy
+      - name: Trigger Zeabur Service Restart
         run: |
-          curl -X POST https://gateway.zeabur.com/graphql \
+          RESPONSE=$(curl -s -X POST https://api.zeabur.com/graphql \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.ZEABUR_API_KEY }}" \
             -d '{
-              "query": "mutation Redeploy($input: RedeployInput!) { redeploy(input: $input) }",
-              "variables": {
-                "input": {
-                  "projectID": "${{ secrets.ZEABUR_PROJECT_ID }}",
-                  "serviceID": "${{ secrets.ZEABUR_SERVICE_ID }}"
-                }
-              }
-            }
+              "query": "mutation { restartService(serviceID: "${{ secrets.ZEABUR_SERVICE_ID }}") }",
+              "variables": {}
+            }')
+          echo "Zeabur Response: $RESPONSE"
+          # 检查是否成功
+          if echo "$RESPONSE" | grep -q '"data":'; then
+            echo "Restart triggered successfully."
+          else
+            echo "Error in restart."
+            exit 1
+          fi
