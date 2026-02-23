@@ -1,0 +1,25 @@
+
+name: Zeabur Auto Restart
+on:
+  schedule:
+    - cron: '0 0 */7 * *'
+  workflow_dispatch:
+
+jobs:
+  restart:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Zeabur API Redeploy
+        run: |
+          curl -X POST https://gateway.zeabur.com/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.ZEABUR_API_KEY }}" \
+            -d '{
+              "query": "mutation Redeploy($input: RedeployInput!) { redeploy(input: $input) }",
+              "variables": {
+                "input": {
+                  "projectID": "${{ secrets.ZEABUR_PROJECT_ID }}",
+                  "serviceID": "${{ secrets.ZEABUR_SERVICE_ID }}"
+                }
+              }
+            }'
