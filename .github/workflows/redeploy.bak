@@ -1,0 +1,19 @@
+      - name: Redeploy Zeabur Service（完整重启 + 重置时间）
+        run: |
+          RESPONSE=$(curl -s -X POST https://api.zeabur.com/graphql \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.ZEABUR_API_KEY }}" \
+            -d '{
+              "query": "mutation RedeployService($environmentID: ObjectID!) { redeployService(environmentID: $environmentID) }",
+              "variables": {
+                "environmentID": "${{ secrets.ZEABUR_ENV_ID }}"
+              }
+            }')
+          
+          echo "Zeabur Response: $RESPONSE"
+          if echo "$RESPONSE" | grep -q '"redeployService"'; then
+            echo "✅ 已触发完整重新部署，Running 时间会很快重置为 0"
+          else
+            echo "❌ 失败"
+            exit 1
+          fi
