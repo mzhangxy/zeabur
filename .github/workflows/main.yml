@@ -3,7 +3,7 @@ name: Zeabur Auto Restart
 on:
   schedule:
     - cron: '0 22 */7 * *'
-  workflow_dispatch:
+  workflow_dispatch:         # 支持手动触发
 
 jobs:
   restart:
@@ -16,8 +16,9 @@ jobs:
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.ZEABUR_API_KEY }}" \
             -d '{
-              "query": "mutation RestartService($environmentID: ObjectID!) { restartService(environmentID: $environmentID) }",
+              "query": "mutation RestartService($serviceID: ObjectID!, $environmentID: ObjectID!) { restartService(serviceID: $serviceID, environmentID: $environmentID) }",
               "variables": {
+                "serviceID": "${{ secrets.ZEABUR_SERVICE_ID }}",
                 "environmentID": "${{ secrets.ZEABUR_ENV_ID }}"
               }
             }')
@@ -25,9 +26,9 @@ jobs:
           echo "Zeabur Response: $RESPONSE"
 
           if echo "$RESPONSE" | grep -q '"restartService":true'; then
-            echo "✅ 服务重启指令发送成功！（环境内所有服务将重启）"
+            echo "✅ Zeabur 服务已成功触发轻量重启！"
           else
-            echo "❌ 重启失败，请检查下面返回内容："
+            echo "❌ 重启失败，请看下面完整返回："
             echo "$RESPONSE" | cat
             exit 1
           fi
