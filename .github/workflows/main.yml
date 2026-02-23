@@ -2,27 +2,33 @@ name: Zeabur Auto Restart
 
 on:
   schedule:
-    - cron: '0 0 */7 * *'  # 每7天
-  workflow_dispatch:
+    - cron: '0 22 */7 * *'  
+  workflow_dispatch:         # 允许手动触发
 
 jobs:
   restart:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Trigger Zeabur Service Restart
+      - name: Restart Zeabur Service
         run: |
           RESPONSE=$(curl -s -X POST https://api.zeabur.com/graphql \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer ${{ secrets.ZEABUR_API_KEY }}" \
             -d '{
-              "query": "mutation { restartService(serviceID: "${{ secrets.ZEABUR_SERVICE_ID }}") }",
-              "variables": {}
+              "query": "mutation RestartService($serviceID: ObjectID!) { restartService(serviceID: $serviceID) }",
+              "variables": {
+                "serviceID": "${{ secrets.ZEABUR_SERVICE_ID }}"
+              }
             }')
+
           echo "Zeabur Response: $RESPONSE"
-          # 检查是否成功
-          if echo "$RESPONSE" | grep -q '"data":'; then
-            echo "Restart triggered successfully."
+
+          # 简单判断是否成功
+          if echo "$RESPONSE" | grep -q '"restartService":true'; then
+            echo "✅ 重启指令发送成功！服务正在重启中..."
           else
-            echo "Error in restart."
+            echo "❌ 重启失败，请检查下面返回内容："
+            echo "$RESPONSE" | cat
             exit 1
           fi
